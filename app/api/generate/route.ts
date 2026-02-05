@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-// Lazy initialization to avoid build-time errors
-let openai: OpenAI | null = null
-
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || '',
-    })
-  }
-  return openai
-}
+// Cloudflare Pages Edge Runtime
+export const runtime = 'edge'
 
 const TEMPLATE_PROMPTS: Record<string, string> = {
   'business-email': `あなたは日本のビジネスメール作成の専門家です。
@@ -93,7 +84,11 @@ export async function POST(request: NextRequest) {
 - トーンや文体の指定
 - 必要に応じた制約条件`
 
-    const completion = await getOpenAI().chat.completions.create({
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+
+    const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
